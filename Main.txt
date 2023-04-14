@@ -1,0 +1,171 @@
+package bullscows;
+
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        playGame();
+    }
+
+    private static void playGame() {
+        System.out.println("Input the length of the secret code:");
+        Scanner sc = new Scanner(System.in);
+        String secretCode = null;
+        String str = sc.nextLine();
+        int n = judgeNonNumeric(str);
+        if (n == 0 || n > 36) {
+            System.out.printf("Error: can't generate a secret number with a length of %d because there aren't enough unique digits.", n);
+            System.exit(0);
+        } else {
+            System.out.println("Input the number of possible symbols in the code:");
+            String str2 = sc.nextLine();
+            int possibleNum = judgeNonNumeric(str2);
+            if (possibleNum < n) {
+                System.out.printf("Error: it's not possible to generate a code with a length of %d with %d unique symbols.\n", n, possibleNum);
+                System.exit(0);
+            } else if (possibleNum > 36) {
+                System.out.println("Error: maximum number of possible symbols in the code is 36 (0-9, a-z).");
+                System.exit(0);
+            } else {
+                secretCode = generateCode(n, possibleNum);
+            }
+
+            System.out.println(secretCode);
+            System.out.print("The secret is prepared: ");
+            for (int i = 0; i < n; i++) {
+                System.out.print("*");
+            }
+            if (possibleNum < 10) {
+                System.out.printf(" (0-%d)\n", possibleNum);
+            } else if (possibleNum == 10) {
+                System.out.printf(" (0-9, a)\n");
+            } else {
+                System.out.printf(" (0-9, a-%c)\n", (char)(97 + (possibleNum - 11)));
+            }
+        }
+        startGame(secretCode);
+
+    }
+
+    public static int judgeNonNumeric(String str) {
+        int n = 0;
+        if (containsNonNumeric(str)) {
+            System.out.printf("Error: \"%s\" isn't a valid number.\n", str);
+            System.exit(0);
+        }
+        n = Integer.parseInt(str);
+        return n;
+    }
+
+    public static boolean containsNonNumeric(String str) {
+        return str.matches(".*[^\\d].*");
+    }
+
+    public static String generateCode(int n, int possibleNum) {
+        List<Character> digits = new ArrayList<>();
+        if (possibleNum < 11) {
+            for (int i = 0; i < possibleNum; i++) {
+                digits.add((char) (i + '0'));
+            }
+        } else {
+            for (int i = 0; i < 10; i++) {
+                digits.add((char) (i + '0'));
+            }
+            for (int i = 10; i < possibleNum; i++) {
+                digits.add((char) (i + 87));
+            }
+        }
+        Collections.shuffle(digits);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            sb.append(digits.get(i));
+        }
+        return sb.toString();
+    }
+
+    private static void startGame(String secretCode) {
+        System.out.println("Okay, let's start a game!");
+        int turnNumber = 1;
+        boolean isBull = false;
+        while (!isBull) {
+            isBull = calculateAndPrint(secretCode, turnNumber);
+            turnNumber++;
+        }
+
+    }
+
+    public static boolean calculateAndPrint(String secretCode, int turnNumber) {
+        Scanner sc = new Scanner(System.in);
+        int n = secretCode.length();
+        System.out.printf("Turn %d. Answer:\n", turnNumber);
+        String guessNumber = sc.next();
+
+        int cows = getCows(guessNumber, secretCode);
+        int bulls =getBulls(guessNumber, secretCode);
+        cows -= bulls;
+
+        printGrade(cows, bulls);
+
+        if (bulls == n) {
+            System.out.println("Congratulations! You guessed the secret code.");
+            return true;
+        }
+        return false;
+
+    }
+
+    private static void printGrade(int cow, int bull) {
+        if (bull > 1) {
+            if (cow == 0) {
+                System.out.println("Grade: " +  bull + " bulls.");
+            } else if (cow == 1) {
+                System.out.println("Grade: " +  bull + " bulls and " + "1 cow");
+            } else if (cow > 1) {
+                System.out.println("Grade: " +  bull + " bulls and " + cow + " cows");
+            }
+        } else if (bull == 1) {
+            if (cow == 0) {
+                System.out.println("Grade: 1 bull.");
+            } else if (cow == 1) {
+                System.out.println("Grade: " +  bull + " bull and " + "1 cow");
+            } else if (cow > 1) {
+                System.out.println("Grade: " +  bull + " bull and " + cow + " cows");
+            }
+        }else if (bull == 0) {
+            if (cow == 0) {
+                System.out.println("None.");
+            } else if (cow == 1) {
+                System.out.println("Grade: 1 cow.");
+            } else if (cow > 1) {
+                System.out.println("Grade: " + cow + " cows");
+            }
+        }
+    }
+
+    private static int getBulls(String str, String secretCode) {
+        int count = 0;
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == secretCode.charAt(i)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int getCows(String str, String secretCode) {
+        int count = 0;
+        boolean[] vis = new boolean[str.length()]; // All of elements are false at first
+
+        for (int i = 0; i < str.length(); i++) {
+            for (int j = 0; j < str.length(); j++) {
+                if (secretCode.charAt(i) == str.charAt(j) && !vis[j]) {
+                    count++;
+                    vis[j] = true;
+                    break;
+                }
+            }
+        }
+        return count;
+    }
+
+}
